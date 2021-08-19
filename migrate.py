@@ -38,9 +38,10 @@ STATE_CRS_MAPPINGS = {
     "MN": "epsg:26915",
     "DE": "epsg:2235",
     "CT": "epsg:26956",
-    # "GA": "epsg:4019", # this is a geographic CRS
+    "GA": "epsg:32617", # used to be epsg:4019, a geographic CRS
     "CO": "epsg:2957",
-    "OK": "epsg:2957"
+    "OK": "epsg:2957",
+    "RI": "epsg:3438"
 }
 
 def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False):
