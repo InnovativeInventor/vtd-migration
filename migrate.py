@@ -38,7 +38,7 @@ STATE_CRS_MAPPINGS = {
     "MN": "epsg:26915",
     "DE": "epsg:2235",
     "CT": "epsg:26956",
-    # "GA": "epsg:4019",
+    # "GA": "epsg:4019", # this is a geographic CRS
     "CO": "epsg:2957",
     "OK": "epsg:2957"
 }
@@ -61,7 +61,6 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
 
     election_cols = autodetect_election_cols(old_precincts.columns)
 
-    # print(type(blocks["VAP"]))
     # matches = close_matches(old_precincts, vtds)
     combined_counties_vtds = []
     # county_matched_vtds = close_matches(vtds, counties)
@@ -70,9 +69,7 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
     county_matched_precincts = maup.assign(old_precincts, counties)
     for county in set(county_matched_vtds.values):
         county_vtds = vtds.iloc[[k for k, v in county_matched_vtds.items() if v==county]]
-        # print(county_vtds)
         county_precincts = old_precincts.iloc[[k for k, v in county_matched_precincts.items() if v==county]]
-        # print(county_precincts)
 
         matches = close_matches(county_vtds, county_precincts, reverse=True)
         matched_vtds = county_vtds.loc[matches].copy()
@@ -88,7 +85,6 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
         # unmatched_vtds = transfer_votes(unmatched_precincts, unmatched_vtds, blocks, election_cols, scaling = "VAP", verbose = True)
         if len(unmatched_precincts):
             unmatched_vtds = transfer_votes(unmatched_precincts, vtds, blocks, election_cols, scaling = "VAP", verbose = True)# .iloc[list(set(vtds.index) - set(matches))].copy()
-            # print("Sum of absolute vote error on unmatched vtds", abs(unmatched_precincts[election_cols].sum() - unmatched_vtds[election_cols].sum()).sum())
             combined_counties_vtds.append(pd.concat([matched_vtds, unmatched_vtds]))
         else:
             combined_counties_vtds.append(matched_vtds)
@@ -141,12 +137,8 @@ def close_matches(source, target, threshold = 0.9, reverse = False):
     """
     Finds close matches in the source and target geometries (assumes that the threshold is > .5).
     """
-    # breakpoint()
     mapping = {}
-    # print(source) # debug
-    # print(target) # debug
     assignment = maup.assign(source, target)
-    # breakpoint()
     for count, source_geom in source["geometry"].items():
         try:
             target_geom = target["geometry"][assignment[count]]
