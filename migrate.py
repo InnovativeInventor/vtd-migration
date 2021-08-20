@@ -41,7 +41,8 @@ STATE_CRS_MAPPINGS = {
     "GA": "epsg:32617", # used to be epsg:4019, a geographic CRS
     "CO": "epsg:2957",
     "OK": "epsg:2957",
-    "RI": "epsg:3438"
+    "RI": "epsg:3438",
+    "PA": "epsg:6562"
 }
 
 def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False):
@@ -61,12 +62,14 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
         old_precincts = repair_gdf_jc_v1_2.repair_gdf_jc(old_precincts, close_gaps=False).reset_index()
 
     election_cols = autodetect_election_cols(old_precincts.columns)
+    old_precincts[election_cols] = old_precincts[election_cols].astype(float)
 
     # matches = close_matches(old_precincts, vtds)
     combined_counties_vtds = []
     # county_matched_vtds = close_matches(vtds, counties)
     county_matched_vtds = maup.assign(vtds, counties)
     # county_matched_precincts = close_matches(old_precincts, counties)
+    # breakpoint()
     county_matched_precincts = maup.assign(old_precincts, counties)
     for county in set(county_matched_vtds.values):
         county_vtds = vtds.iloc[[k for k, v in county_matched_vtds.items() if v==county]]
@@ -159,7 +162,7 @@ def autodetect_election_cols(columns):
     """
     Attempt to autodetect election cols from a given list
     """
-    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF"]
+    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18"]
     election_cols = [x for x in columns if any([x.startswith(y) for y in partial_cols])]
 
     if "SEND" in election_cols:
