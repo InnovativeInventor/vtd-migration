@@ -45,7 +45,7 @@ STATE_CRS_MAPPINGS = {
     "PA": "epsg:6562"
 }
 
-def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False):
+def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False, drop_na: bool = False):
     state = us.states.lookup(state_str)
     crs = STATE_CRS_MAPPINGS[state_str]
     blocks = gpd.read_file(f"/home/max/git/census-process/final/{state_str.lower()}/{state_str.lower()}_block.shp").to_crs(crs)
@@ -58,6 +58,9 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
     old_precincts = gpd.read_file(old_precinct_loc).to_crs(crs)
     # old_precincts["geometry"] = old_precincts["geometry"].apply(lambda x: wkt.loads(str(x)))
     old_precincts["geometry"] = old_precincts["geometry"].buffer(0)# .simplify()
+    if drop_na:
+        old_precincts = old_precincts[~old_precincts["geometry"].isna()]
+
     if repair:
         old_precincts = repair_gdf_jc_v1_2.repair_gdf_jc(old_precincts, close_gaps=False).reset_index()
 
@@ -143,14 +146,15 @@ def close_matches(source, target, threshold = 0.9, reverse = False):
     """
     mapping = {}
     assignment = maup.assign(source, target)
+    target_union = target.unary_union
     for count, source_geom in source["geometry"].items():
         try:
             target_geom = target["geometry"][assignment[count]]
         except KeyError:
             continue
 
-        # if (source_geom.intersection(target_geom).area / source_geom.union(target_geom).area) >= threshold:
-        if (source_geom.intersection(target_geom).area / min(source_geom.area, target_geom.area)) >= threshold:
+        if (source_geom.intersection(target_geom).area / source_geom.intersection(target_union).union(target_geom).area) >= threshold:
+        # if (source_geom.intersection(target_geom).area / min(source_geom.area, target_geom.area)) >= threshold:
             if reverse:
                 mapping[assignment[count]] = count
             else:
