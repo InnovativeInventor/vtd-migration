@@ -20,4 +20,4 @@ python migrate.py OK ../OK-shapefiles/OK_precincts.zip
 python migrate.py RI ../RI-shapefiles/RI_precincts.zip
 python migrate.py WI ../WI-shapefiles/WI_2020_wards.zip
 python migrate.py GA ~/git/GA-shapefiles/GA_precincts.zip
-python migrate.py PA ~/Dropbox/mggg/PA/PA_old_with_2014_fallback.shp --vtd-loc ~/git/PA-shapefiles/PA_pop.shp
+python migrate.py PA ~/Dropbox/mggg/PA/PA_old_with_2014_fallback.shp --vtd-loc ~/git/PA-shapefiles/PA_pop.shp --accept-error

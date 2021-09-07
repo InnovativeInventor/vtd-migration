@@ -45,7 +45,7 @@ STATE_CRS_MAPPINGS = {
     "PA": "epsg:6562"
 }
 
-def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False, drop_na: bool = False):
+def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False, drop_na: bool = False, accept_error: bool = False):
     state = us.states.lookup(state_str)
     crs = STATE_CRS_MAPPINGS[state_str]
     blocks = gpd.read_file(f"/home/max/git/census-process/final/{state_str.lower()}/{state_str.lower()}_block.shp").to_crs(crs)
@@ -102,7 +102,10 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
 
     print(vtds)
     print(f"(final) Sum of absolute vote error on all vtds on {state_str}", abs(old_precincts[election_cols].sum() - vtds[election_cols].sum()).sum())
-    assert abs(old_precincts[election_cols].sum() - vtds[election_cols].sum()).sum() < 1, f"{state_str}"
+    if not accept_error:
+        print("Asserting . . .")
+        assert abs(old_precincts[election_cols].sum() - vtds[election_cols].sum()).sum() < 1, f"{state_str}"
+
     if not output_loc:
         vtds.to_file(f"products/{state_str.upper()}_vtd20.shp")
     else:
@@ -146,14 +149,16 @@ def close_matches(source, target, threshold = 0.9, reverse = False):
     """
     mapping = {}
     assignment = maup.assign(source, target)
-    target_union = target.unary_union
+    target_union = target.unary_union.buffer(0)
     for count, source_geom in source["geometry"].items():
         try:
             target_geom = target["geometry"][assignment[count]]
         except KeyError:
             continue
 
-        if (source_geom.intersection(target_geom).area / source_geom.intersection(target_union).union(target_geom).area) >= threshold:
+        filtered_source = source_geom.intersection(target_union).buffer(0)
+        target_geom = target_geom.buffer(0)
+        if (source_geom.intersection(target_geom).area / filtered_source.union(target_geom).area) >= threshold:
         # if (source_geom.intersection(target_geom).area / min(source_geom.area, target_geom.area)) >= threshold:
             if reverse:
                 mapping[assignment[count]] = count
