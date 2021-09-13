@@ -89,9 +89,9 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
         matched_vtds[election_cols] = matched_precincts.set_index("matches")[election_cols]
         print("Sum of absolute vote error on matched vtds", abs(matched_precincts[election_cols].sum() - matched_vtds[election_cols].sum()).sum())
         # matched_vtds[election_cols] = matches.map(matched_precincts[election_cols])
-        # unmatched_vtds = transfer_votes(unmatched_precincts, unmatched_vtds, blocks, election_cols, scaling = "VAP", verbose = True)
+        # unmatched_vtds = transfer_votes(unmatched_precincts, unmatched_vtds, blocks, election_cols, scaling = "VAP20", verbose = True)
         if len(unmatched_precincts):
-            unmatched_vtds = transfer_votes(unmatched_precincts, vtds, blocks, election_cols, scaling = "VAP", verbose = True)# .iloc[list(set(vtds.index) - set(matches))].copy()
+            unmatched_vtds = transfer_votes(unmatched_precincts, vtds, blocks, election_cols, scaling = "VAP20", verbose = True)# .iloc[list(set(vtds.index) - set(matches))].copy()
             combined_counties_vtds.append(pd.concat([matched_vtds, unmatched_vtds]))
         else:
             combined_counties_vtds.append(matched_vtds)
@@ -114,7 +114,7 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
     if export_blocks:
         blocks.to_file(f"products/{state_str.upper()}_block20.shp")
 
-def transfer_votes(source: gpd.GeoDataFrame, target: gpd.GeoDataFrame, units: gpd.GeoDataFrame, columns: List[str], epsilon_range = (7, 10), scaling = "VAP", verbose = False):
+def transfer_votes(source: gpd.GeoDataFrame, target: gpd.GeoDataFrame, units: gpd.GeoDataFrame, columns: List[str], epsilon_range = (7, 10), scaling = "VAP20", verbose = False):
     assignment = maup.assign(units, source)
 
     closest_weights_vtd_diff = len(target)
@@ -171,7 +171,7 @@ def autodetect_election_cols(columns):
     """
     Attempt to autodetect election cols from a given list
     """
-    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18"]
+    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18", "COMP", "ATG"]
     election_cols = [x for x in columns if any([x.startswith(y) for y in partial_cols])]
 
     if "SEND" in election_cols:
