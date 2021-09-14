@@ -8,6 +8,7 @@ from typing import List
 from shapely import wkt
 import repair_gdf_jc_v1_2
 import tqdm
+import shapely
 
 import warnings; warnings.filterwarnings('ignore', 'GeoSeries.isna', UserWarning)
 # maup.progress.enabled = True
@@ -45,7 +46,7 @@ STATE_CRS_MAPPINGS = {
     "PA": "epsg:6562"
 }
 
-def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False, drop_na: bool = False, accept_error: bool = False):
+def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False, drop_na: bool = False, ignore_top_issues: bool = False, accept_error: bool = False):
     state = us.states.lookup(state_str)
     crs = STATE_CRS_MAPPINGS[state_str]
     blocks = gpd.read_file(f"/home/max/git/census-process/final/{state_str.lower()}/{state_str.lower()}_block.shp").to_crs(crs)
@@ -78,7 +79,7 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
         county_vtds = vtds.iloc[[k for k, v in county_matched_vtds.items() if v==county]]
         county_precincts = old_precincts.iloc[[k for k, v in county_matched_precincts.items() if v==county]]
 
-        matches = close_matches(county_vtds, county_precincts, reverse=True)
+        matches = close_matches(county_vtds, county_precincts, reverse=True, ignore_top_issues = ignore_top_issues)
         matched_vtds = county_vtds.loc[matches].copy()
         # unmatched_vtds = vtds.iloc[list(set(vtds.index) - set(matches))].copy()
         matched_precincts = county_precincts.loc[matches.index].copy()
@@ -143,7 +144,7 @@ def transfer_votes(source: gpd.GeoDataFrame, target: gpd.GeoDataFrame, units: gp
 
     return target
 
-def close_matches(source, target, threshold = 0.9, reverse = False):
+def close_matches(source, target, threshold = 0.9, reverse = False, ignore_top_issues = False):
     """
     Finds close matches in the source and target geometries (assumes that the threshold is > .5).
     """
@@ -158,12 +159,17 @@ def close_matches(source, target, threshold = 0.9, reverse = False):
 
         filtered_source = source_geom.intersection(target_union).buffer(0)
         target_geom = target_geom.buffer(0)
-        if (source_geom.intersection(target_geom).area / filtered_source.union(target_geom).area) >= threshold:
-        # if (source_geom.intersection(target_geom).area / min(source_geom.area, target_geom.area)) >= threshold:
-            if reverse:
-                mapping[assignment[count]] = count
-            else:
-                mapping[count] = assignment[count]
+        try:
+            if (source_geom.intersection(target_geom).area / filtered_source.union(target_geom).area) >= threshold:
+            # if (source_geom.intersection(target_geom).area / min(source_geom.area, target_geom.area)) >= threshold:
+                if reverse:
+                    mapping[assignment[count]] = count
+                else:
+                    mapping[count] = assignment[count]
+        except shapely.errors.TopologicalError as e:
+            print("Topological error", e)
+            if not ignore_top_issues:
+                raise
 
     return pd.Series(mapping)
 
@@ -171,7 +177,7 @@ def autodetect_election_cols(columns):
     """
     Attempt to autodetect election cols from a given list
     """
-    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18", "COMP", "ATG"]
+    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18", "G20", "COMP", "ATG", "SH", "SP_SEN", "USS"]
     election_cols = [x for x in columns if any([x.startswith(y) for y in partial_cols])]
 
     if "SEND" in election_cols:

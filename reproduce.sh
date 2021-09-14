@@ -2,6 +2,8 @@ python migrate.py MI ~/git/MI-shapefiles/MI.zip
 python migrate.py VA ~/git/VA-shapefiles/VA_precincts.zip
 python migrate.py AK ~/git/AK-shapefiles/AK_precincts.zip --repair
 python migrate.py IN ~/git/IN-shapefiles/Indiana.zip
+python migrate.py IN source/in_2020.shp --vtd-loc products/IN_vtd20.shp --ignore-top-issues
+python migrate.py IN source/in_2018.shp --vtd-loc products/IN_vtd20.shp --ignore-top-issues
 python migrate.py UT ~/git/UT-shapefiles/UT_precincts.zip
 python migrate.py AZ ~/git/AZ-shapefiles/az_precincts.zip
 python migrate.py NM ../NM-shapefiles/new_mexico_precincts.zip --vtd-loc ../nm-precincts/nm_precincts.shp --output-loc products/nm_precincts_with_elections.shp
@@ -21,3 +23,9 @@ python migrate.py RI ../RI-shapefiles/RI_precincts.zip
 python migrate.py WI ../WI-shapefiles/WI_2020_wards.zip
 python migrate.py GA ~/git/GA-shapefiles/GA_precincts.zip
 python migrate.py PA ~/Dropbox/mggg/PA/PA_old_with_2014_fallback.shp --vtd-loc ~/git/PA-shapefiles/PA_pop.shp --accept-error
+python migrate.py MD ~/Dropbox/mggg/MD_precincts_full/MD_precincts_full.shp --vtd-loc products/MD_vtd20.shp
+
+python migrate.py OH source/OH16_gen.zip --drop-na --repair
+python migrate.py OH source/OH18_gen.zip --drop-na --vtd-loc products/OH_vtd20.shp --repair
+python migrate.py OH source/OH18_prime.zip --drop-na --vtd-loc products/OH_vtd20.shp --repair
+python migrate.py OH source/OH20_all.zip --drop-na --vtd-loc products/OH_vtd20.shp --repair
