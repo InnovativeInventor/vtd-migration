@@ -46,7 +46,7 @@ STATE_CRS_MAPPINGS = {
     "PA": "epsg:6562"
 }
 
-def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, repair: bool = False, drop_na: bool = False, ignore_top_issues: bool = False, accept_error: bool = False):
+def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, include_cvap: bool = False, repair: bool = False, drop_na: bool = False, ignore_top_issues: bool = False, accept_error: bool = False):
     state = us.states.lookup(state_str)
     crs = STATE_CRS_MAPPINGS[state_str]
     blocks = gpd.read_file(f"/home/max/git/census-process/final/{state_str.lower()}/{state_str.lower()}_block.shp").to_crs(crs)
@@ -65,7 +65,7 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
     if repair:
         old_precincts = repair_gdf_jc_v1_2.repair_gdf_jc(old_precincts, close_gaps=False).reset_index()
 
-    election_cols = autodetect_election_cols(old_precincts.columns)
+    election_cols = autodetect_election_cols(old_precincts.columns, include_cvap)
     old_precincts[election_cols] = old_precincts[election_cols].astype(float)
 
     # matches = close_matches(old_precincts, vtds)
@@ -173,12 +173,15 @@ def close_matches(source, target, threshold = 0.9, reverse = False, ignore_top_i
 
     return pd.Series(mapping)
 
-def autodetect_election_cols(columns):
+def autodetect_election_cols(columns, include_cvap = False):
     """
     Attempt to autodetect election cols from a given list
     """
     partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18", "G20", "COMP", "ATG", "SH", "SP_SEN", "USS"]
-    election_cols = [x for x in columns if any([x.startswith(y) for y in partial_cols])]
+    if include_cvap:
+        election_cols = [x for x in columns if any([x.startswith(y) or "CVAP" in x for y in partial_cols])]
+    else:
+        election_cols = [x for x in columns if any([x.startswith(y) in x for y in partial_cols])]
 
     if "SEND" in election_cols:
         del election_cols[election_cols.index("SEND")]
