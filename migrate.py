@@ -14,6 +14,7 @@ import warnings; warnings.filterwarnings('ignore', 'GeoSeries.isna', UserWarning
 # maup.progress.enabled = True
 
 STATE_CRS_MAPPINGS = {
+    "WI": "epsg:3701",
     "MA": "epsg:2249",
     "MI": "epsg:6493",
     "AK": "epsg:3338",
