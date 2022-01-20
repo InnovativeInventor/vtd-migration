@@ -1,3 +1,5 @@
+set -euxo pipefail
+
 python migrate.py MI ~/git/MI-shapefiles/MI.zip
 python migrate.py VA ~/git/VA-shapefiles/VA_precincts.zip
 python migrate.py AK ~/git/AK-shapefiles/AK_precincts.zip --repair
