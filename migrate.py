@@ -47,7 +47,7 @@ STATE_CRS_MAPPINGS = {
     "PA": "epsg:6562"
 }
 
-def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, epsilon_range = (7, 10), export_blocks: bool = False, include_cvap: bool = False, repair: bool = False, drop_na: bool = False, ignore_top_issues: bool = False, accept_error: bool = False):
+def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = None, driver = None, epsilon_range = (7, 10), export_blocks: bool = False, include_cvap: bool = False, repair: bool = False, drop_na: bool = False, ignore_top_issues: bool = False, accept_error: bool = False):
     state = us.states.lookup(state_str)
     crs = STATE_CRS_MAPPINGS[state_str]
     blocks = gpd.read_file(f"/home/max/git/census-process/final/{state_str.lower()}/{state_str.lower()}_block.shp").to_crs(crs)
@@ -111,7 +111,10 @@ def main(state_str: str, old_precinct_loc: str, vtd_loc = None, output_loc = Non
     if not output_loc:
         vtds.to_file(f"products/{state_str.upper()}_vtd20.shp")
     else:
-        vtds.to_file(output_loc)
+        if driver:
+            vtds.to_file(output_loc, driver=driver)
+        else:
+            vtds.to_file(output_loc)
 
     if export_blocks:
         blocks.to_file(f"products/{state_str.upper()}_block20.shp")
@@ -178,11 +181,11 @@ def autodetect_election_cols(columns, include_cvap = False):
     """
     Attempt to autodetect election cols from a given list
     """
-    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18", "G20", "COMP", "ATG", "SH", "SP_SEN", "USS"]
+    partial_cols = ["SEN", "PRES", "GOV", "TRE", "AG", "LTGOV", "AUD", "USH", "SOS", "CAF", "SSEN", "STH", "TOTVOTE", "RGOV", "DGOV", "DPRES", "RPRES", "DSC", "RSC", "EL", "G16", "G17", "G18", "G20", "COMP", "ATG", "SH", "SP_SEN", "USS", "SOC", "BOSMAY", "SS08P", "SS13P", "LTG", "LG"]
     if include_cvap:
         election_cols = [x for x in columns if any([x.startswith(y) or "CVAP" in x for y in partial_cols])]
     else:
-        election_cols = [x for x in columns if any([x.startswith(y) in x for y in partial_cols])]
+        election_cols = [x for x in columns if any([x.startswith(y) for y in partial_cols])]
 
     if "SEND" in election_cols:
         del election_cols[election_cols.index("SEND")]
